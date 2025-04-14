@@ -1,0 +1,103 @@
+<mujoco model = "MiniArm">
+  <compiler angle="radian" meshdir="meshes/"/>
+  <option timestep="0.001" gravity="0 0 -9.81" />
+  <asset>
+    <mesh name="arm_base" file="BaseLink.stl" scale="10 10 10"/>
+    <mesh name="column_link" file="ColumnLink.stl" scale="10 10 10"/>
+    <mesh name="shoulder_pitch" file="ShoulderPitch.stl" scale="10 10 10"/>
+    <mesh name="Arm1" file="ArmLink1.stl" scale="10 10 10"/>
+    <mesh name="Arm2" file="ArmLink2.stl" scale="10 10 10"/>
+    <mesh name="wrist_pitch" file="WristPitch.stl" scale="10 10 10"/>
+    <mesh name="EE_link" file="EE_Frame.stl" scale="10 10 10"/>
+    <texture type="skybox" builtin="gradient" rgb1=".3 .5 .7" rgb2="0 0 0" width="32" height="512"/>
+    <texture name="body" type="cube" builtin="flat" mark="cross" width="128" height="128" rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" markrgb="1 1 1" random="0.01"/>
+    <material name="body" texture="body" texuniform="true" rgba="0.8 0.6 .4 1"/>
+    <texture name="grid" type="2d" builtin="checker" width="512" height="512" rgb1=".1 .2 .3" rgb2=".2 .3 .4"/>
+    <material name="grid" texture="grid" texrepeat="1 1" texuniform="true" reflectance=".2"/>
+    <material name="red_material" rgba="1 0 0 1"/>  # red
+    <material name="orange_material" rgba="1 0.5 0 1"/>  # orange
+    <material name="blue_material" rgba="0 0 1 1"/>  # blue
+    <material name="green_material" rgba="0 1 0 1"/>  # green
+    <material name="yellow_material" rgba="1 1 0 1"/>  # yellow
+    <material name="purple_material" rgba="1 0 1 1"/>  # purple
+    <material name="pink_material" rgba="1 0.75 0.75 1"/>  # pink
+    <material name="white_material" rgba="1 1 1 1"/>  # white
+  </asset>
+  <visual>
+    <global offwidth="700" offheight="400"/>  
+  </visual>
+  <worldbody>
+    <geom name="floor" size="0 0 .05" type="plane" material="grid" condim="3"/>
+
+    <!-- <camera name="my_camera" pos="0 -3 5" euler="0.8 0 0" mode="track"/> -->
+    <light name="top" pos="0 0 1"/>
+
+    <body name="base" euler="0 0 0">
+      <geom type="mesh" contype="0"  conaffinity="0" group="1" density="0" mesh="arm_base" />
+
+      <body name="colum_link" pos="-0.06 0 0">
+        <joint name="base_yaw" type="hinge" axis="0 0 1" pos="0 0 0" armature="0.005"/>
+        <inertial pos="0.0 0 0.2" quat="1 0 0 0" mass="2.5" diaginertia="0.00176331 0.00174734 0.000400822"/>
+        <geom type="mesh" contype="0"  conaffinity="0" group="1" density="0" mesh="column_link" material="orange_material"/>
+
+        <body name="shoulder_pitch" pos="0 0 0.4">
+          <joint name="shoulder_pitch" type="hinge" axis="0 1 0" pos="0 0 0" armature="0.005"/>
+          <inertial pos="0.0 0 0.0" quat="1 0 0 0" mass="2.3" diaginertia="0.00176331 0.00174734 0.000400822"/>
+          <geom type="mesh" contype="3"  conaffinity="0" group="1" density="0" mesh="shoulder_pitch" material="blue_material"/>
+
+          <body name="UpperArm" pos="0 0 0">
+            <joint name="shoulder_roll" type="hinge" axis="1 0 0" pos="0 0 0" armature="0.005"/>
+            <inertial pos="0.3 0 0.0" quat="1 0 0 0" mass="1.8" diaginertia="0.00176331 0.00174734 0.000400822"/>
+            <geom type="mesh" contype="3"  conaffinity="0" group="1" density="0" mesh="Arm1" material="green_material"/>
+
+            <body name="LowerArm" pos="0.55 0 0">
+              <joint name="elbow" type="hinge" axis="0 1 0" pos="0 0 0" armature="0.005"/>
+              <inertial pos="0.25 0 0.0" quat="1 0 0 0" mass="1.3" diaginertia="0.00176331 0.00174734 0.000400822"/>
+              <geom type="mesh" contype="3"  conaffinity="0" group="1" density="0" mesh="Arm2" material="yellow_material"/>
+
+              <body name="WristPitch" pos="0.45 0 0">
+                <joint name="wrist_pitch" type="hinge" axis="0 1 0" pos="0 0 0" armature="0.005"/>
+                <inertial pos="0.0 0 0" quat="1 0 0 0" mass="0.5" diaginertia="0.001 0.0004 0.001"/>
+                <geom type="mesh" contype="3"  conaffinity="0" group="1" density="0" mesh="wrist_pitch" material="purple_material"/>
+
+                <body name="EE_Frame" pos="0.09 0 0">
+                  <joint name="wrist_roll" type="hinge" axis="1 0 0" pos="0 0 0" armature="0.005" range="0 0"/>
+                  <inertial pos="0.07 0 0" quat="1 0 0 0" mass="0.2" diaginertia="0.001 0.003 0.003"/>
+                  <geom type="mesh" contype="3"  conaffinity="0" group="1" density="0" mesh="EE_link" material="pink_material"/>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+    <!-- <body name="ball" pos="0.5 -0.1 1.3">
+      <geom type="sphere" size="0.15" material="red_material"/>
+      <freejoint/>
+    </body> -->
+  </worldbody>
+<!-- Add actuators for the joints -->
+  <actuator>
+    <motor joint="base_yaw" ctrllimited="true" ctrlrange="-10 10" gear="1"/>
+    <motor joint="shoulder_pitch" ctrllimited="true" ctrlrange="-25 25" gear="1"/>
+    <motor joint="shoulder_roll" ctrllimited="true" ctrlrange="-15 15" gear="1"/>
+    <motor joint="elbow" ctrllimited="true" ctrlrange="-20 20" gear="1"/>
+    <motor joint="wrist_pitch" ctrllimited="true" ctrlrange="-10 10" gear="1"/>
+    <motor joint="wrist_roll" ctrllimited="true" ctrlrange="-5 5" gear="1"/>
+  </actuator>
+  <keyframe>
+    <!-- <key name="init_pose" qpos="1.125 0 0.92 
+                                0.987 0 0.16"
+                                qvel="0 0 0 
+                                0 0 0" />
+ -->
+    <key name="init_pose" qpos="0 -0.0025 0 
+                                -1.5 0.86 0"
+                                qvel="0 0 0 
+                                0 0 0" />
+    <!-- <key name="init_pose" qpos="0 -0.144 0 
+                                -1.6 1.74 0"
+                                qvel="0 0 0 
+                                0 0 0" /> -->
+    </keyframe>
+</mujoco>
