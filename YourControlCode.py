@@ -14,8 +14,68 @@ class YourCtrl:
     self.boxCtrlhdl.set_difficulty(0.25) #set difficulty level
 
   def update(self):
+    box_sensor1_idx = mujoco.mj_name2id(self.m, mujoco.mjtObj.mjOBJ_SENSOR, "mould_pos_sensor1")
+    box_sensor2_idx = mujoco.mj_name2id(self.m, mujoco.mjtObj.mjOBJ_SENSOR, "mould_pos_sensor2")
+    box_sensor3_idx = mujoco.mj_name2id(self.m, mujoco.mjtObj.mjOBJ_SENSOR, "mould_pos_sensor3")
+    box_sensor4_idx = mujoco.mj_name2id(self.m, mujoco.mjtObj.mjOBJ_SENSOR, "mould_pos_sensor4") 
 
-   for i in range(6):
-       self.d.ctrl[i] = 150.0*(self.init_qpos[i] - self.d.qpos[i])  - 5.2 *self.d.qvel[i]
+    boxmould_pos1 = self.d.sensordata[box_sensor1_idx*3:box_sensor1_idx*3+3]
+    boxmould_pos2 = self.d.sensordata[box_sensor2_idx*3:box_sensor2_idx*3+3]
+    boxmould_pos3 = self.d.sensordata[box_sensor3_idx*3:box_sensor3_idx*3+3]
+    boxmould_pos4 = self.d.sensordata[box_sensor4_idx*3:box_sensor4_idx*3+3]
+
+    box_ori,_ = self.boxCtrlhdl.box_orientation(boxmould_pos1, boxmould_pos2,boxmould_pos3,boxmould_pos4)
+    target_ori = self.boxCtrlhdl.rotate_quat_90_y(box_ori)
+
+    final_position = self.boxCtrlhdl.box_midpoint(boxmould_pos1, boxmould_pos2, boxmould_pos3, boxmould_pos4)
+
+    target_ori_rtx = self.boxCtrlhdl.quat2SO3(target_ori)
+    mid_target = final_position + target_ori_rtx @ np.array([-0.15,0,0.0])
+    final_position += target_ori_rtx @ np.array([0.02,0,0.0])
+
+    pre_time = 3
+    if self.d.time < pre_time:
+        target_position = mid_target 
+    else:
+        target_position = self.boxCtrlhdl.pos_interpolate(mid_target, final_position, self.d.time-pre_time, 5)
+  
+    nv = self.m.nv
+    jacp = np.zeros((3, nv))
+    jacr = np.zeros((3, nv))
+
+    EE_Pos = self.boxCtrlhdl._get_ee_position()
+    EE_Ori = self.boxCtrlhdl._get_ee_orientation()
+    EE_Ori_Mtx = self.boxCtrlhdl.quat2SO3(EE_Ori)
+
+    pos_err = self.boxCtrlhdl.get_EE_pos_err()
+
+    mujoco.mj_jacBody(self.m, self.d, jacp, jacr, self.boxCtrlhdl.ee_id)
+    quat_err = self.boxCtrlhdl.quat_multiply(target_ori, self.boxCtrlhdl.quat_inv(EE_Ori))
+    ori_err_quat = self.boxCtrlhdl.quat2so3(quat_err)
+
+    ori_err = ori_err_quat
+    pose_err = np.concatenate((pos_err, ori_err))
+
+    J_pose = np.concatenate((jacp[:, :6], jacr[:,:6]))
+    
+    initial_jpos = np.copy(self.d.qpos[:6])
+    target_jpos = initial_jpos + 0.01 * np.linalg.pinv(J_pose) @ pose_err
+
+    self.d.qpos[:6] = target_jpos
+    mujoco.mj_kinematics(self.m, self.d)
+
+    velocity = self.d.qvel[:6]
+    jpos_error = target_jpos - initial_jpos
+    
+  
+    A = np.zeros((nv,nv))
+    mujoco.mj_fullM(self.m, A, self.d.qM)
+    ArmMassMtx = A[:6,:6]
+    kp = 150
+    kd = 10
+    control_signal = ArmMassMtx @ (kp * jpos_error - kd * velocity) + self.d.qfrc_bias[:6]
+
+    self.d.ctrl[:6] = control_signal
+    
    
 
