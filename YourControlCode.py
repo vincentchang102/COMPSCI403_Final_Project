@@ -11,7 +11,7 @@ class YourCtrl:
     self.init_qpos = d.qpos.copy()
 
     self.boxCtrlhdl = BoxControlHandle(self.m,self.d)
-    self.boxCtrlhdl.set_difficulty(0.25) #set difficulty level
+    self.boxCtrlhdl.set_difficulty(0.25) #set difficulty level 
 
   def update(self):
     box_sensor1_idx = mujoco.mj_name2id(self.m, mujoco.mjtObj.mjOBJ_SENSOR, "mould_pos_sensor1")
@@ -26,26 +26,12 @@ class YourCtrl:
 
     box_ori,_ = self.boxCtrlhdl.box_orientation(boxmould_pos1, boxmould_pos2,boxmould_pos3,boxmould_pos4)
     target_ori = self.boxCtrlhdl.rotate_quat_90_y(box_ori)
-
-    final_position = self.boxCtrlhdl.box_midpoint(boxmould_pos1, boxmould_pos2, boxmould_pos3, boxmould_pos4)
-
-    target_ori_rtx = self.boxCtrlhdl.quat2SO3(target_ori)
-    mid_target = final_position + target_ori_rtx @ np.array([-0.15,0,0.0])
-    final_position += target_ori_rtx @ np.array([0.02,0,0.0])
-
-    pre_time = 3
-    if self.d.time < pre_time:
-        target_position = mid_target 
-    else:
-        target_position = self.boxCtrlhdl.pos_interpolate(mid_target, final_position, self.d.time-pre_time, 5)
   
     nv = self.m.nv
     jacp = np.zeros((3, nv))
     jacr = np.zeros((3, nv))
 
-    EE_Pos = self.boxCtrlhdl._get_ee_position()
     EE_Ori = self.boxCtrlhdl._get_ee_orientation()
-    EE_Ori_Mtx = self.boxCtrlhdl.quat2SO3(EE_Ori)
 
     pos_err = self.boxCtrlhdl.get_EE_pos_err()
 
