@@ -41,6 +41,7 @@ class YourCtrl:
 
     ori_err = ori_err_quat
     pose_err = np.concatenate((pos_err, ori_err))
+    pose_err[2] -= 0.03
 
     J_pose = np.concatenate((jacp[:, :6], jacr[:,:6]))
     
