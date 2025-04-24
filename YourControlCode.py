@@ -11,7 +11,9 @@ class YourCtrl:
     self.init_qpos = d.qpos.copy()
 
     self.boxCtrlhdl = BoxControlHandle(self.m,self.d)
-    self.boxCtrlhdl.set_difficulty(0.25) #set difficulty level 
+    self.boxCtrlhdl.set_difficulty(0.5) #set difficulty level
+
+   
 
   def update(self):
     box_sensor1_idx = mujoco.mj_name2id(self.m, mujoco.mjtObj.mjOBJ_SENSOR, "mould_pos_sensor1")
@@ -41,7 +43,6 @@ class YourCtrl:
 
     ori_err = ori_err_quat
     pose_err = np.concatenate((pos_err, ori_err))
-    pose_err[2] -= 0.03
 
     J_pose = np.concatenate((jacp[:, :6], jacr[:,:6]))
     
@@ -63,6 +64,6 @@ class YourCtrl:
     control_signal = ArmMassMtx @ (kp * jpos_error - kd * velocity) + self.d.qfrc_bias[:6]
 
     self.d.ctrl[:6] = control_signal
-    
+  
    
 
