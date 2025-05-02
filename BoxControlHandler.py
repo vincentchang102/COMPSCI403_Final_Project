@@ -5,8 +5,8 @@ import numpy as np
 class BoxControlHandle:
     def __init__(self,m,d):
         self.tolerance = 5e-3
-        self.amp = 0.05
-        self.freq = 0.5
+        self.amp = 0.05  
+        self.freq = 0.5 
         self.m = m
         self.d = d
         self.completed = False
