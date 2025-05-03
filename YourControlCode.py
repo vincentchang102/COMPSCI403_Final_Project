@@ -40,28 +40,18 @@ class YourCtrl:
     unit_normal = normal / np.linalg.norm(normal)
 
     # Check if the end effector is aligned with the normal vector of the box
-    if np.abs(np.dot(unit_normal, unit_vector)) > 0.95:
+    if np.abs(np.dot(unit_normal, unit_vector)) > 0.99: # THIS CONSTANT COULD BE TUNED TO CHANGE ADJUST:POKE RATIO
       print("axis aligned")
       self.insertion_started = True
       self.insert_start_pos = ee_pos_coord
+    else:
+      print("axis NOT aligned")
+      self.insertion_started = False
     
+
     if self.insertion_started:
       ########### Use Operational Space Control to move the end effector towards the box ###########
-
       
-
-
-
-      # 2. Get EE pose error
-      # EE_Ori = self.boxCtrlhdl._get_ee_orientation()
-      # pos_err = self.boxCtrlhdl.get_EE_pos_err()
-      # # Compute the orientation error as a quaternion
-      # quat_err = self.boxCtrlhdl.quat_multiply(target_ori, self.boxCtrlhdl.quat_inv(EE_Ori))
-      # ori_err_quat = self.boxCtrlhdl.quat2so3(quat_err)
-      # # Combine position and orientation errors into a single pose error
-      # ori_err = ori_err_quat
-      # pose_err = np.concatenate((pos_err, ori_err))
-
       # 3. Compute the Jacobian
       nv = self.m.nv  # Number of degrees of freedom
       jacp = np.zeros((3, nv))  # Jacobian for position
